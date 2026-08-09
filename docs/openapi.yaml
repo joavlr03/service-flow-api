@@ -1,0 +1,131 @@
+openapi: 3.0.3
+info:
+  title: ServiceFlow API
+  version: "2.0"
+  description: Contrato inicial da API REST do ServiceFlow.
+servers:
+  - url: http://localhost:9000
+tags:
+  - name: Autenticação
+  - name: Empresa
+paths:
+  /api/v2/auth/login:
+    post:
+      tags: [Autenticação]
+      summary: Autenticar usuário
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Autenticação concluída
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /api/v2/auth/me:
+    get:
+      tags: [Autenticação]
+      summary: Consultar usuário autenticado
+      responses:
+        '200':
+          description: Usuário autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/v2/empresa:
+    get:
+      tags: [Empresa]
+      summary: Consultar a empresa do usuário autenticado
+      responses:
+        '200':
+          description: Dados da empresa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Company'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+          example: admin@brilhototal.com.br
+        password:
+          type: string
+          format: password
+          example: admin123
+    LoginResponse:
+      type: object
+      required: [accessToken, tokenType, expiresIn, user]
+      properties:
+        accessToken: { type: string }
+        tokenType: { type: string, example: Bearer }
+        expiresIn: { type: integer, format: int64, example: 900 }
+        user:
+          $ref: '#/components/schemas/User'
+    User:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        companyId: { type: integer, format: int64 }
+        name: { type: string }
+        email: { type: string, format: email }
+        role: { type: string, enum: [ADMIN, ATENDENTE, FINANCEIRO] }
+    Company:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        segment: { type: string }
+        ownerName: { type: string }
+        email: { type: string, format: email }
+        plan: { type: string }
+        active: { type: boolean }
+        createdAt: { type: string, format: date-time }
+    ApiError:
+      type: object
+      properties:
+        status: { type: integer }
+        code: { type: string }
+        message: { type: string }
+        fields:
+          type: object
+          additionalProperties: { type: string }
+        timestamp: { type: string, format: date-time }
+  responses:
+    Unauthorized:
+      description: Credenciais ou token inválidos
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+    ValidationError:
+      description: Dados inválidos
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+security:
+  - bearerAuth: []

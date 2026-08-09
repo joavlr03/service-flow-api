@@ -1,0 +1,47 @@
+server:
+  port: 9000
+
+spring:
+  application:
+    name: serviceflow-api
+  datasource:
+    url: "${DB_URL:jdbc:mysql://localhost:3306/serviceflow?createDatabaseIfNotExist=true&serverTimezone=UTC}"
+    username: "${DB_USERNAME:serviceflow}"
+    password: "${DB_PASSWORD:serviceflow}"
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
+  mail:
+    host: "${MAIL_HOST:smtp.gmail.com}"
+    port: "${MAIL_PORT:587}"
+    username: "${MAIL_USERNAME:}"
+    password: "${MAIL_PASSWORD:}"
+    properties.mail.smtp.auth: true
+    properties.mail.smtp.starttls.enable: true
+
+springdoc:
+  swagger-ui:
+    path: /
+    disable-swagger-default-url: true
+  api-docs:
+    path: /api-docs
+
+app:
+  support:
+    email: "${SUPPORT_EMAIL:qorelab.contato@gmail.com}"
+    key: "${SUPPORT_RESET_KEY:}"
+  bootstrap:
+    enabled: "${BOOTSTRAP_ENABLED:false}"
+  security:
+    jwt-secret: "${JWT_SECRET:change-this-development-secret-with-at-least-32-characters}"
+    access-token-minutes: "${ACCESS_TOKEN_MINUTES:15}"
+    expose-reset-token: "${EXPOSE_RESET_TOKEN:false}"
+  cors:
+    allowed-origins: "${CORS_ALLOWED_ORIGINS:http://localhost:8080,http://localhost:5173}"

@@ -1,0 +1,22 @@
+BOOTSTRAP_ADMIN_EMAIL: admin@brilhototal.com.br
+BOOTSTRAP_ADMIN_PASSWORD: admin123
+spring:
+  datasource:
+    url: jdbc:h2:mem:serviceflow;MODE=MySQL;DATABASE_TO_LOWER=TRUE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+  flyway:
+    enabled: false
+app:
+  bootstrap:
+    enabled: true
+  security:
+    jwt-secret: test-secret-with-at-least-thirty-two-characters
+    access-token-minutes: 15
+    expose-reset-token: true
+  cors:
+    allowed-origins: http://localhost:5173
