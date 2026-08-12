@@ -54,7 +54,7 @@ class DomainCreationTest {
 
     private String authenticate() throws Exception {
         String response = mvc.perform(post("/api/v2/auth/login").contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"admin@brilhototal.com.br\",\"password\":\"admin123\"}"))
+                        .content("{\"email\":\"admin@brilhototal.com.br\",\"password\":\"AdminTest@123\"}"))
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
         return "Bearer " + json.readTree(response).get("accessToken").asText();
     }

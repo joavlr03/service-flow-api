@@ -139,6 +139,7 @@ public class DomainService {
     }
 
     public List<OrdemOut> ordens(Long e, LocalDate a, LocalDate b) {
+        validatePeriod(a, b);
         return or.findByEmpresaIdAndDataBetweenOrderByDataAscHorarioAsc(e, a, b).stream().map(this::oo).toList();
     }
 
@@ -170,6 +171,7 @@ public class DomainService {
     }
 
     public List<DespesaOut> despesas(Long e, LocalDate a, LocalDate b) {
+        validatePeriod(a, b);
         return dr.findByEmpresaIdAndDataBetweenOrderByDataDesc(e, a, b).stream().map(this::dd).toList();
     }
 
@@ -281,6 +283,7 @@ public class DomainService {
     }
 
     public FinanceiroOut financeiro(Long e, LocalDate a, LocalDate b) {
+        validatePeriod(a, b);
         var os = or.findByEmpresaIdAndDataBetweenOrderByDataAscHorarioAsc(e, a, b);
         BigDecimal r = os.stream().filter(o -> o.getStatus().equals("FINALIZADO")).map(OrdemServico::getValor)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -292,5 +295,11 @@ public class DomainService {
                 c = os.stream().filter(o -> o.getStatus().equals("CANCELADO")).count();
         return new FinanceiroOut(r, f, d, r.subtract(d), n, c,
                 n == 0 ? BigDecimal.ZERO : r.divide(BigDecimal.valueOf(n), 2, RoundingMode.HALF_UP));
+    }
+
+    private void validatePeriod(LocalDate start, LocalDate end) {
+        if (start.isAfter(end) || java.time.temporal.ChronoUnit.DAYS.between(start, end) > 366) {
+            throw new IllegalArgumentException("Período inválido ou superior a 366 dias");
+        }
     }
 }

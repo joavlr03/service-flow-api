@@ -20,7 +20,11 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -28,7 +32,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @Configuration
 public class SecurityConfig {
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    SecurityFilterChain securityFilterChain(HttpSecurity http, AuthRateLimitFilter rateLimitFilter,
+                                            PasswordChangeRequiredFilter passwordChangeFilter) throws Exception {
         return http
                 .csrf(csrf -> csrf.disable())
                 .cors(Customizer.withDefaults())
@@ -37,16 +42,19 @@ public class SecurityConfig {
                         .requestMatchers("/", "/swagger-ui/**", "/api-docs/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v2/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v2/auth/refresh", "/api/v2/auth/esqueci-minha-senha", "/api/v2/auth/redefinir-senha").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v2/auth/suporte/redefinir-senha").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v2/setup").permitAll()
+                        .requestMatchers("/api/v2/financeiro/**", "/api/v2/dashboard/**", "/api/v2/despesas/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v2/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
-                .oauth2ResourceServer(resource -> resource.jwt(Customizer.withDefaults()))
+                .oauth2ResourceServer(resource -> resource.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
+                .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(passwordChangeFilter, BearerTokenAuthenticationFilter.class)
                 .build();
     }
 
     @Bean
     PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        return new BCryptPasswordEncoder(12);
     }
 
     @Bean
@@ -56,7 +64,19 @@ public class SecurityConfig {
 
     @Bean
     JwtDecoder jwtDecoder(@Value("${app.security.jwt-secret}") String secret) {
-        return NimbusJwtDecoder.withSecretKey(key(secret)).macAlgorithm(MacAlgorithm.HS256).build();
+        NimbusJwtDecoder decoder = NimbusJwtDecoder.withSecretKey(key(secret)).macAlgorithm(MacAlgorithm.HS256).build();
+        decoder.setJwtValidator(org.springframework.security.oauth2.jwt.JwtValidators.createDefaultWithIssuer("serviceflow-api"));
+        return decoder;
+    }
+
+    @Bean
+    JwtAuthenticationConverter jwtAuthenticationConverter() {
+        JwtGrantedAuthoritiesConverter authorities = new JwtGrantedAuthoritiesConverter();
+        authorities.setAuthoritiesClaimName("role");
+        authorities.setAuthorityPrefix("ROLE_");
+        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
+        converter.setJwtGrantedAuthoritiesConverter(authorities);
+        return converter;
     }
 
     @Bean
@@ -65,7 +85,7 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(Arrays.stream(allowedOrigins.split(",")).map(String::trim).toList());
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Support-Key"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Setup-Key"));
         configuration.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
@@ -73,6 +93,9 @@ public class SecurityConfig {
     }
 
     private SecretKey key(String secret) {
+        if (secret == null || secret.isBlank()) {
+            throw new IllegalArgumentException("JWT_SECRET é obrigatório");
+        }
         byte[] bytes = secret.getBytes(StandardCharsets.UTF_8);
         if (bytes.length < 32) {
             throw new IllegalArgumentException("JWT_SECRET deve ter pelo menos 32 bytes");

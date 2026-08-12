@@ -20,9 +20,12 @@ public class BootstrapDataConfig {
             EmpresaRepository empresaRepository,
             UsuarioRepository usuarioRepository,
             PasswordEncoder passwordEncoder,
-            @Value("${BOOTSTRAP_ADMIN_EMAIL:admin@lavarapidobrizzi.com.br}") String email,
-            @Value("${BOOTSTRAP_ADMIN_PASSWORD:admin123}") String password) {
+            @Value("${app.bootstrap.admin-email}") String email,
+            @Value("${app.bootstrap.admin-password}") String password) {
         return args -> {
+            if (email.isBlank() || password.length() < 12) {
+                throw new IllegalStateException("Bootstrap habilitado exige e-mail e senha segura (mínimo 12 caracteres)");
+            }
             if (usuarioRepository.existsByEmailIgnoreCase(email)) return;
 
             Empresa empresa = new Empresa();

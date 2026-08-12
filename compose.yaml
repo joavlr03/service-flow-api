@@ -4,14 +4,14 @@ services:
     environment:
       MYSQL_DATABASE: serviceflow
       MYSQL_USER: serviceflow
-      MYSQL_PASSWORD: serviceflow
-      MYSQL_ROOT_PASSWORD: root
+      MYSQL_PASSWORD: "${MYSQL_PASSWORD:?Defina MYSQL_PASSWORD}"
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD:?Defina MYSQL_ROOT_PASSWORD}"
     ports:
-      - "3306:3306"
+      - "127.0.0.1:3306:3306"
     volumes:
       - serviceflow_mysql:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-userviceflow", "-pserviceflow"]
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -userviceflow -p$$MYSQL_PASSWORD"]
       interval: 5s
       timeout: 5s
       retries: 20

@@ -27,7 +27,7 @@ class AuthControllerTest {
     @Test
     void shouldLoginAndReadAuthenticatedUser() throws Exception {
         String body = """
-                {"email":"admin@brilhototal.com.br","password":"admin123"}
+                {"email":"admin@brilhototal.com.br","password":"AdminTest@123"}
                 """;
         String response = mockMvc.perform(post("/api/v2/auth/login")
                         .contentType(MediaType.APPLICATION_JSON).content(body))
@@ -57,7 +57,7 @@ class AuthControllerTest {
     void shouldPersistChangedPassword() throws Exception {
         String login = mockMvc.perform(post("/api/v2/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"admin@brilhototal.com.br\",\"password\":\"admin123\"}"))
+                        .content("{\"email\":\"admin@brilhototal.com.br\",\"password\":\"AdminTest@123\"}"))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         String accessToken = objectMapper.readTree(login).get("accessToken").asText();
@@ -65,7 +65,7 @@ class AuthControllerTest {
         mockMvc.perform(post("/api/v2/auth/alterar-senha")
                         .header("Authorization", "Bearer " + accessToken)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"currentPassword\":\"admin123\",\"newPassword\":\"NovaSenha@123\"}"))
+                        .content("{\"currentPassword\":\"AdminTest@123\",\"newPassword\":\"NovaSenha@123\"}"))
                 .andExpect(status().isOk());
 
         mockMvc.perform(post("/api/v2/auth/login")
@@ -77,7 +77,7 @@ class AuthControllerTest {
     @Test
     void shouldRotateAndRevokeRefreshToken() throws Exception {
         String login = mockMvc.perform(post("/api/v2/auth/login").contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"admin@brilhototal.com.br\",\"password\":\"admin123\"}"))
+                        .content("{\"email\":\"admin@brilhototal.com.br\",\"password\":\"AdminTest@123\"}"))
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
         String first = objectMapper.readTree(login).get("refreshToken").asText();
         String refreshed = mockMvc.perform(post("/api/v2/auth/refresh").contentType(MediaType.APPLICATION_JSON)

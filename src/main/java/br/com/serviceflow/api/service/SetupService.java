@@ -11,6 +11,10 @@ import br.com.serviceflow.api.repository.TipoServicoRepository;
 import br.com.serviceflow.api.model.TipoServico;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,17 +25,24 @@ public class SetupService {
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
     private final TipoServicoRepository tipoServicoRepository;
+    private final String setupKey;
 
     public SetupService(EmpresaRepository empresaRepository, UsuarioRepository usuarioRepository,
-                        PasswordEncoder passwordEncoder, TipoServicoRepository tipoServicoRepository) {
+                        PasswordEncoder passwordEncoder, TipoServicoRepository tipoServicoRepository,
+                        @Value("${app.setup.key}") String setupKey) {
         this.empresaRepository = empresaRepository;
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
         this.tipoServicoRepository = tipoServicoRepository;
+        this.setupKey = setupKey;
     }
 
     @Transactional
-    public synchronized SetupResponse setup(SetupRequest request) {
+    public synchronized SetupResponse setup(String suppliedKey, SetupRequest request) {
+        if (setupKey.isBlank() || suppliedKey == null ||
+                !MessageDigest.isEqual(setupKey.getBytes(StandardCharsets.UTF_8), suppliedKey.getBytes(StandardCharsets.UTF_8))) {
+            throw new BadCredentialsException("Credencial de setup inválida");
+        }
         if (usuarioRepository.count() > 0) throw new SetupAlreadyCompletedException();
 
         LocalDateTime now = LocalDateTime.now();

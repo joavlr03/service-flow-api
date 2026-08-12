@@ -75,7 +75,7 @@ components:
         password:
           type: string
           format: password
-          example: admin123
+          example: SenhaForte@2026
     LoginResponse:
       type: object
       required: [accessToken, tokenType, expiresIn, user]

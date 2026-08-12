@@ -32,6 +32,7 @@ public class TokenService {
                 .claim("email", usuario.getEmail())
                 .claim("companyId", usuario.getEmpresa().getId())
                 .claim("role", usuario.getPerfil())
+                .claim("passwordChangeRequired", Boolean.TRUE.equals(usuario.getTrocaSenhaObrigatoria()))
                 .build();
         JwsHeader header = JwsHeader.with(MacAlgorithm.HS256).build();
         return jwtEncoder.encode(JwtEncoderParameters.from(header, claims)).getTokenValue();

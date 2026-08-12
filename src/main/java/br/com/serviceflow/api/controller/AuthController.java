@@ -16,7 +16,6 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -59,9 +58,6 @@ public class AuthController {
 
     @PostMapping("/esqueci-minha-senha") @SecurityRequirements @Operation(summary="Solicitar recuperação de senha")
     public MessageResponse forgot(@Valid @RequestBody ForgotPasswordRequest request){return supportRecoveryService.request(request);}
-
-    @PostMapping("/suporte/redefinir-senha") @SecurityRequirements @Operation(summary="Definir senha temporária pelo suporte")
-    public MessageResponse supportReset(@RequestHeader("X-Support-Key") String key,@Valid @RequestBody SupportResetRequest request){supportRecoveryService.reset(key,request);return new MessageResponse("Senha temporária definida",null);}
 
     @PostMapping("/redefinir-senha") @SecurityRequirements @Operation(summary="Redefinir senha com token")
     public MessageResponse reset(@Valid @RequestBody ResetPasswordRequest request){credentialTokenService.reset(request);return new MessageResponse("Senha redefinida",null);}

@@ -9,5 +9,5 @@ public record SetupRequest(
         @NotBlank String segment,
         @NotBlank String ownerName,
         @NotBlank @Email String email,
-        @NotBlank @Size(min = 8, max = 72) String password,
+        @NotBlank @Size(min = 12, max = 72) String password,
         @NotBlank String plan) {}

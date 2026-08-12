@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -25,7 +26,8 @@ public class SetupController {
     @ResponseStatus(HttpStatus.CREATED)
     @SecurityRequirements
     @Operation(summary = "Cadastrar empresa e proprietário na primeira instalação")
-    public SetupResponse setup(@Valid @RequestBody SetupRequest request) {
-        return service.setup(request);
+    public SetupResponse setup(@RequestHeader("X-Setup-Key") String setupKey,
+                               @Valid @RequestBody SetupRequest request) {
+        return service.setup(setupKey, request);
     }
 }

@@ -1,1 +1,1 @@
-package br.com.serviceflow.api.dto.auth; import jakarta.validation.constraints.*; public record ChangePasswordRequest(@NotBlank String currentPassword,@NotBlank @Size(min=8,max=72) String newPassword){}
+package br.com.serviceflow.api.dto.auth; import jakarta.validation.constraints.*; public record ChangePasswordRequest(@NotBlank @Size(max=72) String currentPassword,@NotBlank @Size(min=12,max=72) String newPassword){}
