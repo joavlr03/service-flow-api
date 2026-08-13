@@ -12,6 +12,8 @@ spring:
   flyway:
     enabled: false
 app:
+  mail:
+    enabled: false
   bootstrap:
     enabled: true
     admin-email: admin@brilhototal.com.br

@@ -15,10 +15,14 @@ public class MailConfig {
         sender.setHost(host);
         sender.setPort(port);
         sender.setUsername(username);
-        sender.setPassword(password);
+        sender.setPassword(password.replaceAll("\\s", ""));
         Properties p = sender.getJavaMailProperties();
         p.put("mail.smtp.auth", "true");
         p.put("mail.smtp.starttls.enable", "true");
+        p.put("mail.smtp.starttls.required", "true");
+        p.put("mail.smtp.connectiontimeout", "5000");
+        p.put("mail.smtp.timeout", "5000");
+        p.put("mail.smtp.writetimeout", "5000");
         return sender;
     }
 }
