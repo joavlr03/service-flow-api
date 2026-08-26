@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 public class SupportRecoveryService {
     private static final Logger log = LoggerFactory.getLogger(SupportRecoveryService.class);
     private static final String RESPONSE =
-            "Se o e-mail estiver cadastrado, a solicitação será encaminhada ao suporte";
+            "Se o identificador estiver cadastrado, a solicitação será encaminhada ao suporte";
     private final UsuarioRepository users;
     private final JavaMailSender mail;
     private final String supportEmail;
@@ -46,7 +46,7 @@ public class SupportRecoveryService {
             message.setSubject("ServiceFlow - solicitação de redefinição de senha");
             message.setText("Uma solicitação de recuperação de acesso foi recebida.\n\n"
                     + "Usuário: " + user.getNome() + "\n"
-                    + "E-mail: " + user.getEmail() + "\n"
+                    + "Identificador: " + user.getEmail() + "\n"
                     + "Data: " + LocalDateTime.now() + "\n\n"
                     + "Nenhuma senha foi alterada. Confirme a identidade do solicitante antes de prestar suporte.");
             try {

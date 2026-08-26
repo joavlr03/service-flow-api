@@ -7,8 +7,43 @@ servers:
   - url: http://localhost:9000
 tags:
   - name: Autenticação
+  - name: Configuração inicial
   - name: Empresa
 paths:
+  /api/v2/setup/status:
+    get:
+      tags: [Configuração inicial]
+      summary: Consultar se o primeiro cadastro está disponível
+      security: []
+      responses:
+        '200':
+          description: Estado do cadastro inicial
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SetupStatus'
+  /api/v2/setup:
+    post:
+      tags: [Configuração inicial]
+      summary: Cadastrar a empresa e seu primeiro proprietário
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetupRequest'
+      responses:
+        '201':
+          description: Cadastro inicial concluído
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SetupResponse'
+        '409':
+          description: O cadastro inicial já foi concluído
+        '422':
+          $ref: '#/components/responses/ValidationError'
   /api/v2/auth/login:
     post:
       tags: [Autenticação]
@@ -64,13 +99,39 @@ components:
       scheme: bearer
       bearerFormat: JWT
   schemas:
+    SetupStatus:
+      type: object
+      required: [available]
+      properties:
+        available: { type: boolean }
+    SetupRequest:
+      type: object
+      required: [companyName, segment, ownerName, email, password]
+      properties:
+        companyName: { type: string, maxLength: 150 }
+        segment: { type: string, maxLength: 100 }
+        ownerName: { type: string, maxLength: 150 }
+        email:
+          type: string
+          description: E-mail recomendado ou outro identificador único de acesso
+          maxLength: 180
+        password: { type: string, format: password, minLength: 12, maxLength: 72 }
+    SetupResponse:
+      type: object
+      properties:
+        companyId: { type: integer, format: int64 }
+        userId: { type: integer, format: int64 }
+        ownerName: { type: string }
+        email: { type: string }
+        role: { type: string, example: ADMIN }
+        status: { type: string, example: ACTIVE }
     LoginRequest:
       type: object
       required: [email, password]
       properties:
         email:
           type: string
-          format: email
+          description: E-mail ou identificador de acesso
           example: admin@brilhototal.com.br
         password:
           type: string
@@ -91,7 +152,7 @@ components:
         id: { type: integer, format: int64 }
         companyId: { type: integer, format: int64 }
         name: { type: string }
-        email: { type: string, format: email }
+        email: { type: string, description: E-mail ou identificador de acesso }
         role: { type: string, enum: [ADMIN, ATENDENTE, FINANCEIRO] }
     Company:
       type: object
@@ -100,7 +161,7 @@ components:
         name: { type: string }
         segment: { type: string }
         ownerName: { type: string }
-        email: { type: string, format: email }
+        email: { type: string, description: E-mail ou identificador de acesso }
         plan: { type: string }
         active: { type: boolean }
         createdAt: { type: string, format: date-time }

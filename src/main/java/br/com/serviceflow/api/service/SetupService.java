@@ -2,6 +2,7 @@ package br.com.serviceflow.api.service;
 
 import br.com.serviceflow.api.dto.setup.SetupRequest;
 import br.com.serviceflow.api.dto.setup.SetupResponse;
+import br.com.serviceflow.api.dto.setup.SetupStatusResponse;
 import br.com.serviceflow.api.exception.SetupAlreadyCompletedException;
 import br.com.serviceflow.api.model.Empresa;
 import br.com.serviceflow.api.model.Usuario;
@@ -11,10 +12,6 @@ import br.com.serviceflow.api.repository.TipoServicoRepository;
 import br.com.serviceflow.api.model.TipoServico;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,24 +22,22 @@ public class SetupService {
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
     private final TipoServicoRepository tipoServicoRepository;
-    private final String setupKey;
 
     public SetupService(EmpresaRepository empresaRepository, UsuarioRepository usuarioRepository,
-                        PasswordEncoder passwordEncoder, TipoServicoRepository tipoServicoRepository,
-                        @Value("${app.setup.key}") String setupKey) {
+                        PasswordEncoder passwordEncoder, TipoServicoRepository tipoServicoRepository) {
         this.empresaRepository = empresaRepository;
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
         this.tipoServicoRepository = tipoServicoRepository;
-        this.setupKey = setupKey;
+    }
+
+    @Transactional(readOnly = true)
+    public SetupStatusResponse status() {
+        return new SetupStatusResponse(usuarioRepository.count() == 0);
     }
 
     @Transactional
-    public synchronized SetupResponse setup(String suppliedKey, SetupRequest request) {
-        if (setupKey.isBlank() || suppliedKey == null ||
-                !MessageDigest.isEqual(setupKey.getBytes(StandardCharsets.UTF_8), suppliedKey.getBytes(StandardCharsets.UTF_8))) {
-            throw new BadCredentialsException("Credencial de setup inválida");
-        }
+    public synchronized SetupResponse setup(SetupRequest request) {
         if (usuarioRepository.count() > 0) throw new SetupAlreadyCompletedException();
 
         LocalDateTime now = LocalDateTime.now();
@@ -51,7 +46,7 @@ public class SetupService {
         empresa.setSegmento(request.segment().trim());
         empresa.setNomeProprietario(request.ownerName().trim());
         empresa.setEmail(request.email().trim().toLowerCase());
-        empresa.setPlano(request.plan().trim());
+        empresa.setPlano("Operacional + Financeiro");
         empresa.setAtivo(true);
         empresa.setCriadoEm(now);
         empresa = empresaRepository.save(empresa);

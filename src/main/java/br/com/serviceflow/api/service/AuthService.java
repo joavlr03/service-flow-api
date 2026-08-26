@@ -33,9 +33,9 @@ public class AuthService {
     public LoginResponse login(LoginRequest request) {
         Usuario usuario = usuarioRepository.findByEmailIgnoreCase(request.email().trim())
                 .filter(u -> Boolean.TRUE.equals(u.getAtivo()))
-                .orElseThrow(() -> new BadCredentialsException("E-mail ou senha inválidos"));
+                .orElseThrow(() -> new BadCredentialsException("Identificador ou senha inválidos"));
         if (!passwordEncoder.matches(request.password(), usuario.getSenhaHash())) {
-            throw new BadCredentialsException("E-mail ou senha inválidos");
+            throw new BadCredentialsException("Identificador ou senha inválidos");
         }
         usuario.setUltimoLoginEm(LocalDateTime.now());
         return new LoginResponse(

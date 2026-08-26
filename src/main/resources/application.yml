@@ -37,12 +37,6 @@ springdoc:
 app:
   support:
     email: "${SUPPORT_EMAIL:qorelab.contato@gmail.com}"
-  bootstrap:
-    enabled: "${BOOTSTRAP_ENABLED:false}"
-    admin-email: "${BOOTSTRAP_ADMIN_EMAIL:}"
-    admin-password: "${BOOTSTRAP_ADMIN_PASSWORD:}"
-  setup:
-    key: "${SETUP_KEY:}"
   security:
     jwt-secret: "${JWT_SECRET}"
     access-token-minutes: "${ACCESS_TOKEN_MINUTES:15}"

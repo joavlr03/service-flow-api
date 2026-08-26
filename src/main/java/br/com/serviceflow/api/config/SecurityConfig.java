@@ -42,7 +42,7 @@ public class SecurityConfig {
                         .requestMatchers("/", "/swagger-ui/**", "/api-docs/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v2/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v2/auth/refresh", "/api/v2/auth/esqueci-minha-senha", "/api/v2/auth/redefinir-senha").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v2/setup").permitAll()
+                        .requestMatchers("/api/v2/setup/**").permitAll()
                         .requestMatchers("/api/v2/financeiro/**", "/api/v2/dashboard/**", "/api/v2/despesas/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/v2/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
@@ -85,7 +85,7 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(Arrays.stream(allowedOrigins.split(",")).map(String::trim).toList());
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Setup-Key"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
         configuration.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
