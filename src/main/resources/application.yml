@@ -6,7 +6,7 @@ spring:
   application:
     name: serviceflow-api
   datasource:
-    url: "${DB_URL:jdbc:mysql://localhost:3306/serviceflow?createDatabaseIfNotExist=true&serverTimezone=UTC}"
+    url: "${DB_URL:jdbc:postgresql://localhost:5432/serviceflow}"
     username: "${DB_USERNAME:serviceflow}"
     password: "${DB_PASSWORD:serviceflow}"
   jpa:

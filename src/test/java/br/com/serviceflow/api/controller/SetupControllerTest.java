@@ -16,7 +16,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 @SpringBootTest(properties = {
         "app.test-data.enabled=false",
-        "spring.datasource.url=jdbc:h2:mem:setup;MODE=MySQL;DATABASE_TO_LOWER=TRUE"
+        "spring.datasource.url=jdbc:h2:mem:setup;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE"
 })
 @AutoConfigureMockMvc
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
