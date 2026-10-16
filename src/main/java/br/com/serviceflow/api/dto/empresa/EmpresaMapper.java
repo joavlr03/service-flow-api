@@ -9,6 +9,6 @@ public class EmpresaMapper {
         return new EmpresaResponse(
                 empresa.getId(), empresa.getNome(), empresa.getSegmento(),
                 empresa.getNomeProprietario(), empresa.getEmail(), empresa.getPlano(),
-                empresa.getAtivo(), empresa.getCriadoEm());
+                empresa.getAtivo(), empresa.getCriadoEm(), empresa.getCorPrimaria());
     }
 }

@@ -26,4 +26,10 @@ public class EmpresaService {
         empresa.setPlano(request.plan());
         return repository.save(empresa);
     }
+
+    public Empresa updateTema(Long id, String color) {
+        Empresa empresa = findById(id);
+        empresa.setCorPrimaria(color.toUpperCase());
+        return repository.save(empresa);
+    }
 }

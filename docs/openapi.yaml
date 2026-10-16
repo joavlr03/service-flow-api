@@ -92,6 +92,32 @@ paths:
                 $ref: '#/components/schemas/Company'
         '401':
           $ref: '#/components/responses/Unauthorized'
+  /api/v2/empresa/tema:
+    put:
+      tags: [Empresa]
+      summary: Alterar a cor de destaque do app da empresa (somente ADMIN)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [color]
+              properties:
+                color: { type: string, pattern: '^#[0-9A-Fa-f]{6}$', example: '#2563EB' }
+      responses:
+        '200':
+          description: Empresa com a cor atualizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Company'
+        '422':
+          description: Cor fora do formato #RRGGBB
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Usuário não é ADMIN
 components:
   securitySchemes:
     bearerAuth:
@@ -165,6 +191,7 @@ components:
         plan: { type: string }
         active: { type: boolean }
         createdAt: { type: string, format: date-time }
+        themeColor: { type: string, nullable: true, example: '#2563EB', description: Cor de destaque do app em hex; null = cor padrão }
     ApiError:
       type: object
       properties:

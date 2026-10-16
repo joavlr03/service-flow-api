@@ -5,12 +5,13 @@ import java.math.BigDecimal;
 import java.time.*;
 
 @Entity
-@Table(name = "tb_ordens_servicos")
+@Table(name = "tb_ordens_servicos", uniqueConstraints =
+        @UniqueConstraint(name = "uk_os_empresa_codigo", columnNames = {"empresa_id", "codigo"}))
 public class OrdemServico {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column(nullable = false, unique = true, length = 30)
+    @Column(nullable = false, length = 30)
     private String codigo;
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "empresa_id", nullable = false)
@@ -35,6 +36,10 @@ public class OrdemServico {
     private String observacoes;
     @Column(nullable = false, length = 20)
     private String status;
+    @Column(name = "forma_pagamento", length = 20)
+    private String formaPagamento;
+    @Column(nullable = false)
+    private Boolean pago = false;
     @Column(name = "criado_em", nullable = false)
     private LocalDateTime criadoEm;
     @Column(name = "atualizado_em", nullable = false)
@@ -133,6 +138,22 @@ public class OrdemServico {
 
     public void setStatus(String v) {
         status = v;
+    }
+
+    public String getFormaPagamento() {
+        return formaPagamento;
+    }
+
+    public void setFormaPagamento(String v) {
+        formaPagamento = v;
+    }
+
+    public Boolean getPago() {
+        return pago;
+    }
+
+    public void setPago(Boolean v) {
+        pago = v;
     }
 
     public LocalDateTime getCriadoEm() {

@@ -4,6 +4,7 @@ import br.com.serviceflow.api.dto.empresa.EmpresaMapper;
 import br.com.serviceflow.api.dto.empresa.EmpresaResponse;
 import br.com.serviceflow.api.service.EmpresaService;
 import br.com.serviceflow.api.dto.domain.DomainDtos.EmpresaIn;
+import br.com.serviceflow.api.dto.domain.DomainDtos.TemaIn;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -37,5 +38,11 @@ public class EmpresaController {
     @Operation(summary = "Atualizar a empresa do usuário autenticado")
     public EmpresaResponse update(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody EmpresaIn request) {
         return mapper.toDto(service.update(jwt.getClaim("companyId"), request));
+    }
+
+    @PutMapping("/tema")
+    @Operation(summary = "Alterar a cor de destaque do app da empresa (somente ADMIN)")
+    public EmpresaResponse updateTema(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody TemaIn request) {
+        return mapper.toDto(service.updateTema(jwt.getClaim("companyId"), request.color()));
     }
 }

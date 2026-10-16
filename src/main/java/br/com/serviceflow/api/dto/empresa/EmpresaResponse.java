@@ -10,4 +10,5 @@ public record EmpresaResponse(
         String email,
         String plan,
         Boolean active,
-        LocalDateTime createdAt) {}
+        LocalDateTime createdAt,
+        String themeColor) {}

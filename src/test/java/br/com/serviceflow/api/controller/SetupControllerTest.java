@@ -25,11 +25,16 @@ class SetupControllerTest {
     private static final String BODY = """
             {"companyName":"Lava Rápido Central","segment":"Estética Automotiva",
              "ownerName":"João Silva","email":"joao-central",
-             "password":"SenhaForte@2026"}
+             "password":"SenhaForte@2026","inviteKey":"test-invite-key"}
+            """;
+    private static final String BODY_SECOND_COMPANY = """
+            {"companyName":"Lava Rápido Norte","segment":"Estética Automotiva",
+             "ownerName":"Maria Souza","email":"maria-norte",
+             "password":"SenhaForte@2026","inviteKey":"test-invite-key"}
             """;
 
     @Test
-    void shouldSetupOnceAndAllowLogin() throws Exception {
+    void shouldSetupAndAllowLogin() throws Exception {
         mvc.perform(get("/api/v2/setup/status"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.available", is(true)));
@@ -42,9 +47,23 @@ class SetupControllerTest {
         mvc.perform(get("/api/v2/setup/status"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.available", is(false)));
+    }
+
+    @Test
+    void shouldAllowSetupOfSecondCompanyWithValidInviteKey() throws Exception {
         mvc.perform(post("/api/v2/setup").contentType(MediaType.APPLICATION_JSON).content(BODY))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.code", is("SETUP_ALREADY_COMPLETED")));
+                .andExpect(status().isCreated());
+        mvc.perform(post("/api/v2/setup").contentType(MediaType.APPLICATION_JSON).content(BODY_SECOND_COMPANY))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.role", is("ADMIN")));
+    }
+
+    @Test
+    void shouldRejectSetupWithInvalidInviteKey() throws Exception {
+        String badBody = BODY.replace("test-invite-key", "chave-errada");
+        mvc.perform(post("/api/v2/setup").contentType(MediaType.APPLICATION_JSON).content(badBody))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code", is("INVALID_CREDENTIALS")));
     }
 
     @Test

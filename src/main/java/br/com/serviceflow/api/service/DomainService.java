@@ -122,7 +122,9 @@ public class DomainService {
         o.setCliente(c);
         o.setVeiculo(v);
         o.setTipoServico(ser(x.serviceId(), e));
-        o.setCodigo("OS-" + (1000 + or.countByEmpresaId(e) + 1));
+        // shortcut: dois cadastros simultâneos na mesma empresa podem gerar o mesmo número (a constraint barra), usar sequence por empresa se virar problema
+        int ultimo = or.findTopByEmpresaIdOrderByIdDesc(e).map(u -> Integer.parseInt(u.getCodigo().substring(3))).orElse(1000);
+        o.setCodigo("OS-" + (ultimo + 1));
         o.setDescricao(x.description());
         o.setData(x.date());
         o.setHorario(x.time());
@@ -143,11 +145,18 @@ public class DomainService {
         return or.findByEmpresaIdAndDataBetweenOrderByDataAscHorarioAsc(e, a, b).stream().map(this::oo).toList();
     }
 
-    public OrdemOut status(Long e, Long i, String s) {
-        if (!Set.of("AGENDADO", "FINALIZADO", "CANCELADO").contains(s))
+    public OrdemOut status(Long e, Long i, StatusIn x) {
+        if (!Set.of("AGENDADO", "FINALIZADO", "CANCELADO").contains(x.status()))
             throw new IllegalArgumentException("Status inválido");
-        OrdemServico o = or.findByIdAndEmpresaId(i, e).orElseThrow();
-        o.setStatus(s);
+        if (Boolean.TRUE.equals(x.paid()) && x.paymentMethod() == null)
+            throw new IllegalArgumentException("Informe a forma de pagamento");
+        OrdemServico o = or.findByIdAndEmpresaId(i, e)
+                .orElseThrow(() -> new EntityNotFoundException("OS não encontrada"));
+        o.setStatus(x.status());
+        if (x.paymentMethod() != null)
+            o.setFormaPagamento(x.paymentMethod());
+        if (x.paid() != null)
+            o.setPago(x.paid());
         o.setAtualizadoEm(LocalDateTime.now());
         return oo(o);
     }
@@ -155,7 +164,7 @@ public class DomainService {
     private OrdemOut oo(OrdemServico o) {
         return new OrdemOut(o.getId(), o.getCodigo(), o.getCliente().getId(), o.getVeiculo().getId(),
                 o.getTipoServico().getId(), o.getDescricao(), o.getData(), o.getHorario(), o.getValor(),
-                o.getObservacoes(), o.getStatus());
+                o.getObservacoes(), o.getStatus(), o.getFormaPagamento(), o.getPago());
     }
 
     public DespesaOut addDespesa(Long e, DespesaIn x) {

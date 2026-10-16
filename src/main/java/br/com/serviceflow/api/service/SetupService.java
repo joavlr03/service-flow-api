@@ -12,6 +12,8 @@ import br.com.serviceflow.api.repository.TipoServicoRepository;
 import br.com.serviceflow.api.model.TipoServico;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,13 +24,16 @@ public class SetupService {
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
     private final TipoServicoRepository tipoServicoRepository;
+    private final String inviteKey;
 
     public SetupService(EmpresaRepository empresaRepository, UsuarioRepository usuarioRepository,
-                        PasswordEncoder passwordEncoder, TipoServicoRepository tipoServicoRepository) {
+                        PasswordEncoder passwordEncoder, TipoServicoRepository tipoServicoRepository,
+                        @Value("${app.security.setup-invite-key}") String inviteKey) {
         this.empresaRepository = empresaRepository;
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
         this.tipoServicoRepository = tipoServicoRepository;
+        this.inviteKey = inviteKey;
     }
 
     @Transactional(readOnly = true)
@@ -38,7 +43,9 @@ public class SetupService {
 
     @Transactional
     public synchronized SetupResponse setup(SetupRequest request) {
-        if (usuarioRepository.count() > 0) throw new SetupAlreadyCompletedException();
+        if (!inviteKey.equals(request.inviteKey())) {
+            throw new BadCredentialsException("Chave de convite inválida");
+        }
 
         LocalDateTime now = LocalDateTime.now();
         Empresa empresa = new Empresa();

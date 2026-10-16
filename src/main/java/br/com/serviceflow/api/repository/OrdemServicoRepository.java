@@ -12,7 +12,7 @@ public interface OrdemServicoRepository extends JpaRepository<OrdemServico, Long
 
     List<OrdemServico> findByEmpresaIdAndClienteIdOrderByDataDescHorarioDesc(Long e, Long c);
 
-    long countByEmpresaId(Long e);
+    Optional<OrdemServico> findTopByEmpresaIdOrderByIdDesc(Long e);
 
     boolean existsByEmpresaIdAndClienteId(Long e, Long c);
     boolean existsByEmpresaIdAndVeiculoId(Long e, Long v);

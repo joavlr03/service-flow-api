@@ -36,6 +36,10 @@ public class Empresa {
     @Column(name = "criado_em", nullable = false)
     private LocalDateTime criadoEm;
 
+    // Cor de destaque do app em hex (#RRGGBB); null = cor padrão.
+    @Column(name = "cor_primaria", length = 7)
+    private String corPrimaria;
+
     public Empresa() {}
 
     public Long getId() { return id; }
@@ -54,4 +58,6 @@ public class Empresa {
     public void setAtivo(Boolean ativo) { this.ativo = ativo; }
     public LocalDateTime getCriadoEm() { return criadoEm; }
     public void setCriadoEm(LocalDateTime criadoEm) { this.criadoEm = criadoEm; }
+    public String getCorPrimaria() { return corPrimaria; }
+    public void setCorPrimaria(String corPrimaria) { this.corPrimaria = corPrimaria; }
 }
