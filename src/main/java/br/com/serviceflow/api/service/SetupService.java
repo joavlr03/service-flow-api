@@ -10,6 +10,8 @@ import br.com.serviceflow.api.repository.EmpresaRepository;
 import br.com.serviceflow.api.repository.UsuarioRepository;
 import br.com.serviceflow.api.repository.TipoServicoRepository;
 import br.com.serviceflow.api.model.TipoServico;
+import br.com.serviceflow.api.model.Categoria;
+import br.com.serviceflow.api.repository.CategoriaRepository;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,15 +26,18 @@ public class SetupService {
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
     private final TipoServicoRepository tipoServicoRepository;
+    private final CategoriaRepository categoriaRepository;
     private final String inviteKey;
 
     public SetupService(EmpresaRepository empresaRepository, UsuarioRepository usuarioRepository,
                         PasswordEncoder passwordEncoder, TipoServicoRepository tipoServicoRepository,
+                        CategoriaRepository categoriaRepository,
                         @Value("${app.security.setup-invite-key}") String inviteKey) {
         this.empresaRepository = empresaRepository;
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
         this.tipoServicoRepository = tipoServicoRepository;
+        this.categoriaRepository = categoriaRepository;
         this.inviteKey = inviteKey;
     }
 
@@ -74,6 +79,8 @@ public class SetupService {
         criarServico(empresa, "Polimento", "220.00", 180, now);
         criarServico(empresa, "Higienização Interna", "160.00", 120, now);
         criarServico(empresa, "Cera Premium", "120.00", 90, now);
+        for (String nome : CategoriaService.PADRAO_DESPESA)
+            categoriaRepository.save(new Categoria(empresa, "DESPESA", nome));
 
         return new SetupResponse(empresa.getId(), usuario.getId(), usuario.getNome(),
                 usuario.getEmail(), usuario.getPerfil(), "ACTIVE");

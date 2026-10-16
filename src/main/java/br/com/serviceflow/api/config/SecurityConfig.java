@@ -44,7 +44,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v2/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v2/auth/refresh", "/api/v2/auth/esqueci-minha-senha", "/api/v2/auth/redefinir-senha").permitAll()
                         .requestMatchers("/api/v2/setup/**").permitAll()
-                        .requestMatchers("/api/v2/financeiro/**", "/api/v2/dashboard/**", "/api/v2/despesas/**").hasRole("ADMIN")
+                        .requestMatchers("/api/v2/financeiro/**", "/api/v2/dashboard/**", "/api/v2/despesas/**", "/api/v2/categorias/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/v2/**").hasRole("ADMIN")
                         .requestMatchers("/api/v2/empresa/tema").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/v2/servicos").hasRole("ADMIN")

@@ -118,6 +118,52 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           description: Usuário não é ADMIN
+  /api/v2/categorias:
+    get:
+      tags: [Categorias]
+      summary: Listar as categorias da empresa (somente ADMIN)
+      parameters:
+        - { name: tipo, in: query, schema: { type: string, enum: [DESPESA, ENTRADA], default: DESPESA } }
+      responses:
+        '200':
+          description: Categorias ordenadas por nome
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Category' } }
+    post:
+      tags: [Categorias]
+      summary: Criar categoria (somente ADMIN)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CategoryInput' }
+      responses:
+        '200': { description: Categoria criada }
+        '422': { description: Nome vazio, maior que 40 caracteres ou repetido }
+  /api/v2/categorias/{id}:
+    put:
+      tags: [Categorias]
+      summary: Renomear ou ativar/desativar (somente ADMIN); renomear também troca o nome nas despesas já lançadas
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CategoryInput' }
+      responses:
+        '200': { description: Categoria atualizada }
+        '404': { description: Categoria não existe nesta empresa }
+        '422': { description: Nome repetido }
+    delete:
+      tags: [Categorias]
+      summary: Excluir categoria sem despesas (somente ADMIN)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '204': { description: Excluída }
+        '422': { description: Categoria usada em despesas; desative-a em vez de excluir }
 components:
   securitySchemes:
     bearerAuth:
@@ -125,6 +171,20 @@ components:
       scheme: bearer
       bearerFormat: JWT
   schemas:
+    Category:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string, maxLength: 40 }
+        type: { type: string, enum: [DESPESA, ENTRADA] }
+        active: { type: boolean }
+    CategoryInput:
+      type: object
+      required: [name, type]
+      properties:
+        name: { type: string, maxLength: 40, example: Marketing }
+        type: { type: string, enum: [DESPESA, ENTRADA] }
+        active: { type: boolean, default: true }
     SetupStatus:
       type: object
       required: [available]
