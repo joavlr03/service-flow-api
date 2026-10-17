@@ -40,6 +40,19 @@ public class Empresa {
     @Column(name = "cor_primaria", length = 7)
     private String corPrimaria;
 
+    // SERVICOS (atendimentos) ou VENDAS (produtos e estoque).
+    @Column(name = "modo_uso", nullable = false, length = 20)
+    private String modoUso = "SERVICOS";
+
+    @Column(name = "usa_veiculo", nullable = false)
+    private Boolean usaVeiculo = true;
+
+    @Column(name = "usa_duracao", nullable = false)
+    private Boolean usaDuracao = true;
+
+    @Column(name = "onboarding_concluido", nullable = false)
+    private Boolean onboardingConcluido = false;
+
     public Empresa() {}
 
     public Long getId() { return id; }
@@ -58,6 +71,14 @@ public class Empresa {
     public void setAtivo(Boolean ativo) { this.ativo = ativo; }
     public LocalDateTime getCriadoEm() { return criadoEm; }
     public void setCriadoEm(LocalDateTime criadoEm) { this.criadoEm = criadoEm; }
+    public Boolean getUsaDuracao() { return usaDuracao; }
+    public void setUsaDuracao(Boolean usaDuracao) { this.usaDuracao = usaDuracao; }
+    public Boolean getOnboardingConcluido() { return onboardingConcluido; }
+    public void setOnboardingConcluido(Boolean onboardingConcluido) { this.onboardingConcluido = onboardingConcluido; }
+    public Boolean getUsaVeiculo() { return usaVeiculo; }
+    public void setUsaVeiculo(Boolean usaVeiculo) { this.usaVeiculo = usaVeiculo; }
+    public String getModoUso() { return modoUso; }
+    public void setModoUso(String modoUso) { this.modoUso = modoUso; }
     public String getCorPrimaria() { return corPrimaria; }
     public void setCorPrimaria(String corPrimaria) { this.corPrimaria = corPrimaria; }
 }

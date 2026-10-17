@@ -42,6 +42,11 @@ public class GlobalExceptionHandler {
         return response(HttpStatus.CONFLICT, "SETUP_ALREADY_COMPLETED", exception.getMessage(), Map.of());
     }
 
+    @ExceptionHandler(OnboardingAlreadyCompletedException.class)
+    ResponseEntity<ApiError> onboardingCompleted(OnboardingAlreadyCompletedException exception) {
+        return response(HttpStatus.CONFLICT, "ONBOARDING_ALREADY_COMPLETED", exception.getMessage(), Map.of());
+    }
+
     private ResponseEntity<ApiError> response(HttpStatus status, String code, String message,
                                                Map<String, String> fields) {
         return ResponseEntity.status(status)

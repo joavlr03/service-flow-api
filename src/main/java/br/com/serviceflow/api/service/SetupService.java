@@ -8,11 +8,8 @@ import br.com.serviceflow.api.model.Empresa;
 import br.com.serviceflow.api.model.Usuario;
 import br.com.serviceflow.api.repository.EmpresaRepository;
 import br.com.serviceflow.api.repository.UsuarioRepository;
-import br.com.serviceflow.api.repository.TipoServicoRepository;
-import br.com.serviceflow.api.model.TipoServico;
 import br.com.serviceflow.api.model.Categoria;
 import br.com.serviceflow.api.repository.CategoriaRepository;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -25,18 +22,15 @@ public class SetupService {
     private final EmpresaRepository empresaRepository;
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
-    private final TipoServicoRepository tipoServicoRepository;
     private final CategoriaRepository categoriaRepository;
     private final String inviteKey;
 
     public SetupService(EmpresaRepository empresaRepository, UsuarioRepository usuarioRepository,
-                        PasswordEncoder passwordEncoder, TipoServicoRepository tipoServicoRepository,
-                        CategoriaRepository categoriaRepository,
+                        PasswordEncoder passwordEncoder, CategoriaRepository categoriaRepository,
                         @Value("${app.security.setup-invite-key}") String inviteKey) {
         this.empresaRepository = empresaRepository;
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
-        this.tipoServicoRepository = tipoServicoRepository;
         this.categoriaRepository = categoriaRepository;
         this.inviteKey = inviteKey;
     }
@@ -74,21 +68,13 @@ public class SetupService {
         usuario.setCriadoEm(now);
         usuario = usuarioRepository.save(usuario);
 
-        criarServico(empresa, "Lavagem Simples", "45.00", 40, now);
-        criarServico(empresa, "Lavagem Completa", "80.00", 70, now);
-        criarServico(empresa, "Polimento", "220.00", 180, now);
-        criarServico(empresa, "Higienização Interna", "160.00", 120, now);
-        criarServico(empresa, "Cera Premium", "120.00", 90, now);
+        // Serviços (ou produtos) não são mais semeados: a empresa cadastra os seus no primeiro acesso.
         for (String nome : CategoriaService.PADRAO_DESPESA)
             categoriaRepository.save(new Categoria(empresa, "DESPESA", nome));
+        for (String nome : CategoriaService.PADRAO_ENTRADA)
+            categoriaRepository.save(new Categoria(empresa, "ENTRADA", nome));
 
         return new SetupResponse(empresa.getId(), usuario.getId(), usuario.getNome(),
                 usuario.getEmail(), usuario.getPerfil(), "ACTIVE");
-    }
-
-    private void criarServico(Empresa empresa, String nome, String preco, int duracao, LocalDateTime now) {
-        TipoServico servico = new TipoServico(); servico.setEmpresa(empresa); servico.setNome(nome);
-        servico.setPrecoPadrao(new BigDecimal(preco)); servico.setDuracaoMinutos(duracao);
-        servico.setAtivo(true); servico.setCriadoEm(now); tipoServicoRepository.save(servico);
     }
 }

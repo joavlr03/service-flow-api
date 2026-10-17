@@ -7,6 +7,7 @@ import br.com.serviceflow.api.model.Empresa;
 import br.com.serviceflow.api.repository.CategoriaRepository;
 import br.com.serviceflow.api.repository.DespesaRepository;
 import br.com.serviceflow.api.repository.EmpresaRepository;
+import br.com.serviceflow.api.repository.EntradaRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import org.springframework.stereotype.Service;
@@ -18,14 +19,18 @@ public class CategoriaService {
     // Usadas no cadastro de empresa nova; empresas antigas receberam a mesma lista na V8.
     public static final List<String> PADRAO_DESPESA = List.of("Produtos", "Água e Energia", "Aluguel",
             "Funcionários", "Manutenção", "Impostos", "Fornecedores", "Outros");
+    public static final List<String> PADRAO_ENTRADA = List.of("Venda de produto", "Serviço avulso", "Comissão", "Outros");
 
     private final CategoriaRepository repository;
     private final DespesaRepository despesas;
+    private final EntradaRepository entradas;
     private final EmpresaRepository empresas;
 
-    public CategoriaService(CategoriaRepository repository, DespesaRepository despesas, EmpresaRepository empresas) {
+    public CategoriaService(CategoriaRepository repository, DespesaRepository despesas, EntradaRepository entradas,
+            EmpresaRepository empresas) {
         this.repository = repository;
         this.despesas = despesas;
+        this.entradas = entradas;
         this.empresas = empresas;
     }
 
@@ -52,15 +57,20 @@ public class CategoriaService {
         if (x.active() != null) c.setAtivo(x.active());
         // Renomear vale também para o histórico, senão o Financeiro e o Excel mostram dois nomes.
         // Fica por último: a query grava a categoria antes e limpa o contexto depois.
-        if (!antigo.equals(nome) && c.getTipo().equals("DESPESA"))
-            despesas.renameCategoria(e, antigo, nome);
+        if (!antigo.equals(nome)) {
+            if (c.getTipo().equals("DESPESA")) despesas.renameCategoria(e, antigo, nome);
+            else entradas.renameCategoria(e, antigo, nome);
+        }
         return out(c);
     }
 
     public void delete(Long e, Long id) {
         Categoria c = find(e, id);
-        if (c.getTipo().equals("DESPESA") && despesas.existsByEmpresaIdAndCategoria(e, c.getNome()))
-            throw new IllegalArgumentException("Categoria usada em despesas; desative-a em vez de excluir");
+        boolean emUso = c.getTipo().equals("DESPESA")
+                ? despesas.existsByEmpresaIdAndCategoria(e, c.getNome())
+                : entradas.existsByEmpresaIdAndCategoria(e, c.getNome());
+        if (emUso)
+            throw new IllegalArgumentException("Categoria já usada em lançamentos; desative-a em vez de excluir");
         repository.delete(c);
     }
 

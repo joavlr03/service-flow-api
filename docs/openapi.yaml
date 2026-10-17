@@ -163,7 +163,45 @@ paths:
         - { name: id, in: path, required: true, schema: { type: integer } }
       responses:
         '204': { description: Excluída }
-        '422': { description: Categoria usada em despesas; desative-a em vez de excluir }
+        '422': { description: Categoria usada em lançamentos; desative-a em vez de excluir }
+  /api/v2/entradas:
+    get:
+      tags: [Entradas]
+      summary: Listar entradas avulsas do período (somente ADMIN; máx. 366 dias)
+      parameters:
+        - { name: dataInicial, in: query, required: true, schema: { type: string, format: date } }
+        - { name: dataFinal, in: query, required: true, schema: { type: string, format: date } }
+      responses:
+        '200':
+          description: Entradas da mais recente para a mais antiga
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Income' } }
+    post:
+      tags: [Entradas]
+      summary: Registrar entrada avulsa (receita sem atendimento); soma na receita do /financeiro/resumo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/IncomeInput' }
+      responses:
+        '200': { description: Entrada criada }
+        '422': { description: Descrição vazia, valor não positivo ou categoria com mais de 40 caracteres }
+  /api/v2/entradas/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: integer } }
+    get: { tags: [Entradas], summary: Buscar entrada, responses: { '200': { description: Entrada }, '404': { description: Não existe nesta empresa } } }
+    put:
+      tags: [Entradas]
+      summary: Editar entrada
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/IncomeInput' }
+      responses: { '200': { description: Entrada atualizada }, '404': { description: Não existe nesta empresa } }
+    delete: { tags: [Entradas], summary: Excluir entrada, responses: { '204': { description: Excluída }, '404': { description: Não existe nesta empresa } } }
 components:
   securitySchemes:
     bearerAuth:
@@ -185,6 +223,21 @@ components:
         name: { type: string, maxLength: 40, example: Marketing }
         type: { type: string, enum: [DESPESA, ENTRADA] }
         active: { type: boolean, default: true }
+    IncomeInput:
+      type: object
+      required: [description, category, amount, date]
+      properties:
+        description: { type: string, maxLength: 180, example: Venda de cera }
+        category: { type: string, maxLength: 40, example: Venda de produto }
+        amount: { type: number, minimum: 0.01, example: 40.5 }
+        date: { type: string, format: date }
+        notes: { type: string, maxLength: 1000 }
+    Income:
+      allOf:
+        - $ref: '#/components/schemas/IncomeInput'
+        - type: object
+          properties:
+            id: { type: integer }
     SetupStatus:
       type: object
       required: [available]

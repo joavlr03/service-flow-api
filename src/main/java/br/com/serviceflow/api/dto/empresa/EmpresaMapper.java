@@ -9,6 +9,7 @@ public class EmpresaMapper {
         return new EmpresaResponse(
                 empresa.getId(), empresa.getNome(), empresa.getSegmento(),
                 empresa.getNomeProprietario(), empresa.getEmail(), empresa.getPlano(),
-                empresa.getAtivo(), empresa.getCriadoEm(), empresa.getCorPrimaria());
+                empresa.getAtivo(), empresa.getCriadoEm(), empresa.getCorPrimaria(), empresa.getModoUso(),
+                empresa.getUsaVeiculo(), empresa.getUsaDuracao(), empresa.getOnboardingConcluido());
     }
 }

@@ -19,15 +19,19 @@ public class DomainService {
     private final TipoServicoRepository sr;
     private final OrdemServicoRepository or;
     private final DespesaRepository dr;
+    private final EntradaRepository nr;
+    private final ProdutoRepository pr;
 
     public DomainService(EmpresaRepository er, ClienteRepository cr, VeiculoRepository vr, TipoServicoRepository sr,
-            OrdemServicoRepository or, DespesaRepository dr) {
+            OrdemServicoRepository or, DespesaRepository dr, EntradaRepository nr, ProdutoRepository pr) {
         this.er = er;
         this.cr = cr;
         this.vr = vr;
         this.sr = sr;
         this.or = or;
         this.dr = dr;
+        this.nr = nr;
+        this.pr = pr;
     }
 
     private Empresa emp(Long e) {
@@ -114,21 +118,18 @@ public class DomainService {
 
     public OrdemOut addOrdem(Long e, OrdemIn x) {
         Cliente c = cli(x.clientId(), e);
-        Veiculo v = vei(x.vehicleId(), e);
-        if (!v.getCliente().getId().equals(c.getId()))
-            throw new IllegalArgumentException("Veículo não pertence ao cliente");
+        Veiculo v = veiculoDa(e, c, x.vehicleId());
         OrdemServico o = new OrdemServico();
         o.setEmpresa(emp(e));
         o.setCliente(c);
         o.setVeiculo(v);
-        o.setTipoServico(ser(x.serviceId(), e));
+        conteudo(o, e, x);
         // shortcut: dois cadastros simultâneos na mesma empresa podem gerar o mesmo número (a constraint barra), usar sequence por empresa se virar problema
         int ultimo = or.findTopByEmpresaIdOrderByIdDesc(e).map(u -> Integer.parseInt(u.getCodigo().substring(3))).orElse(1000);
         o.setCodigo("OS-" + (ultimo + 1));
         o.setDescricao(x.description());
         o.setData(x.date());
         o.setHorario(x.time());
-        o.setValor(x.price());
         o.setObservacoes(x.notes());
         o.setStatus("AGENDADO");
         o.setCriadoEm(LocalDateTime.now());
@@ -152,6 +153,9 @@ public class DomainService {
             throw new IllegalArgumentException("Informe a forma de pagamento");
         OrdemServico o = or.findByIdAndEmpresaId(i, e)
                 .orElseThrow(() -> new EntityNotFoundException("OS não encontrada"));
+        boolean era = o.getStatus().equals("FINALIZADO"), vai = x.status().equals("FINALIZADO");
+        if (!era && vai) baixarEstoque(o);
+        if (era && !vai) devolverEstoque(o);
         o.setStatus(x.status());
         if (x.paymentMethod() != null)
             o.setFormaPagamento(x.paymentMethod());
@@ -162,9 +166,67 @@ public class DomainService {
     }
 
     private OrdemOut oo(OrdemServico o) {
-        return new OrdemOut(o.getId(), o.getCodigo(), o.getCliente().getId(), o.getVeiculo().getId(),
-                o.getTipoServico().getId(), o.getDescricao(), o.getData(), o.getHorario(), o.getValor(),
-                o.getObservacoes(), o.getStatus(), o.getFormaPagamento(), o.getPago());
+        return new OrdemOut(o.getId(), o.getCodigo(), o.getCliente().getId(),
+                o.getVeiculo() == null ? null : o.getVeiculo().getId(),
+                o.getTipoServico() == null ? null : o.getTipoServico().getId(), o.getDescricao(), o.getData(),
+                o.getHorario(), o.getValor(), o.getObservacoes(), o.getStatus(), o.getFormaPagamento(), o.getPago(),
+                o.getItens().stream().map(i -> new ItemOut(i.getProduto().getId(), i.getProduto().getNome(),
+                        i.getQuantidade(), i.getPrecoUnitario())).toList());
+    }
+
+    // Veículo obrigatório só para empresa que usa veículo; se vier, tem que ser do cliente.
+    private Veiculo veiculoDa(Long e, Cliente c, Long vehicleId) {
+        if (vehicleId == null) {
+            if (Boolean.TRUE.equals(emp(e).getUsaVeiculo()))
+                throw new IllegalArgumentException("Informe o veículo");
+            return null;
+        }
+        Veiculo v = vei(vehicleId, e);
+        if (!v.getCliente().getId().equals(c.getId()))
+            throw new IllegalArgumentException("Veículo não pertence ao cliente");
+        return v;
+    }
+
+    // Serviço (atendimento) ou itens (venda). Numa venda o valor é a soma dos itens, com o preço do produto agora.
+    private void conteudo(OrdemServico o, Long e, OrdemIn x) {
+        boolean temItens = x.items() != null && !x.items().isEmpty();
+        if (x.serviceId() == null && !temItens)
+            throw new IllegalArgumentException("Informe o serviço ou ao menos um produto");
+        o.setTipoServico(x.serviceId() == null ? null : ser(x.serviceId(), e));
+        o.getItens().clear();
+        if (!temItens) {
+            o.setValor(x.price());
+            return;
+        }
+        BigDecimal total = BigDecimal.ZERO;
+        for (ItemIn i : x.items()) {
+            Produto p = pr.findByIdAndEmpresaId(i.productId(), e)
+                    .orElseThrow(() -> new EntityNotFoundException("Produto não encontrado"));
+            o.getItens().add(new ItemOrdem(o, p, i.quantity(), p.getPreco()));
+            total = total.add(p.getPreco().multiply(BigDecimal.valueOf(i.quantity())));
+        }
+        o.setValor(total.setScale(2, RoundingMode.HALF_UP));
+    }
+
+    private Map<Produto, Integer> quantidades(OrdemServico o) {
+        Map<Produto, Integer> q = new LinkedHashMap<>();
+        o.getItens().forEach(i -> q.merge(i.getProduto(), i.getQuantidade(), Integer::sum));
+        return q;
+    }
+
+    // shortcut: duas vendas finalizadas no mesmo instante podem ler o mesmo saldo; a CHECK estoque >= 0 do banco barra o negativo. Usar lock/versão se virar problema.
+    private void baixarEstoque(OrdemServico o) {
+        Map<Produto, Integer> q = quantidades(o);
+        q.forEach((p, n) -> {
+            if (p.getEstoque() < n)
+                throw new IllegalArgumentException("Estoque insuficiente de " + p.getNome() + ": há " + p.getEstoque()
+                        + ", a venda pede " + n);
+        });
+        q.forEach((p, n) -> p.setEstoque(p.getEstoque() - n));
+    }
+
+    private void devolverEstoque(OrdemServico o) {
+        quantidades(o).forEach((p, n) -> p.setEstoque(p.getEstoque() + n));
     }
 
     public DespesaOut addDespesa(Long e, DespesaIn x) {
@@ -251,23 +313,25 @@ public class DomainService {
         OrdemServico o = or.findByIdAndEmpresaId(id, e)
                 .orElseThrow(() -> new EntityNotFoundException("OS não encontrada"));
         Cliente c = cli(x.clientId(), e);
-        Veiculo v = vei(x.vehicleId(), e);
-        if (!v.getCliente().getId().equals(c.getId()))
-            throw new IllegalArgumentException("Veículo não pertence ao cliente");
+        Veiculo v = veiculoDa(e, c, x.vehicleId());
+        // Venda finalizada já baixou o estoque: trocar produtos exige reabrir antes.
+        if (o.getStatus().equals("FINALIZADO") && (!o.getItens().isEmpty() || (x.items() != null && !x.items().isEmpty())))
+            throw new IllegalArgumentException("Reabra a venda para alterar os produtos");
         o.setCliente(c);
         o.setVeiculo(v);
-        o.setTipoServico(ser(x.serviceId(), e));
+        conteudo(o, e, x);
         o.setDescricao(x.description());
         o.setData(x.date());
         o.setHorario(x.time());
-        o.setValor(x.price());
         o.setObservacoes(x.notes());
         o.setAtualizadoEm(LocalDateTime.now());
         return oo(o);
     }
 
     public void deleteOrdem(Long e, Long id) {
-        or.delete(or.findByIdAndEmpresaId(id, e).orElseThrow(() -> new EntityNotFoundException("OS não encontrada")));
+        OrdemServico o = or.findByIdAndEmpresaId(id, e).orElseThrow(() -> new EntityNotFoundException("OS não encontrada"));
+        if (o.getStatus().equals("FINALIZADO")) devolverEstoque(o);
+        or.delete(o);
     }
 
     public DespesaOut despesa(Long e, Long id) {
@@ -300,9 +364,12 @@ public class DomainService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal d = dr.findByEmpresaIdAndDataBetweenOrderByDataDesc(e, a, b).stream().map(Despesa::getValor)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+        // Entradas avulsas somam na receita realizada e prevista; o ticket médio continua só com atendimentos.
+        BigDecimal en = nr.findByEmpresaIdAndDataBetweenOrderByDataDesc(e, a, b).stream().map(Entrada::getValor)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
         long n = os.stream().filter(o -> o.getStatus().equals("FINALIZADO")).count(),
                 c = os.stream().filter(o -> o.getStatus().equals("CANCELADO")).count();
-        return new FinanceiroOut(r, f, d, r.subtract(d), n, c,
+        return new FinanceiroOut(r.add(en), f.add(en), d, r.add(en).subtract(d), n, c,
                 n == 0 ? BigDecimal.ZERO : r.divide(BigDecimal.valueOf(n), 2, RoundingMode.HALF_UP));
     }
 

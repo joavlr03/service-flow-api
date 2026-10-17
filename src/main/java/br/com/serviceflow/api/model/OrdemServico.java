@@ -19,12 +19,17 @@ public class OrdemServico {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "cliente_id", nullable = false)
     private Cliente cliente;
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "veiculo_id", nullable = false)
+    // Nulo quando a empresa não usa veículo (usa_veiculo = false).
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "veiculo_id")
     private Veiculo veiculo;
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "tipo_servico_id", nullable = false)
+    // Nulo numa venda (modo VENDAS), que tem itens em vez de serviço.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tipo_servico_id")
     private TipoServico tipoServico;
+    @OneToMany(mappedBy = "ordem", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("id")
+    private java.util.List<ItemOrdem> itens = new java.util.ArrayList<>();
     private String descricao;
     @Column(nullable = false)
     private LocalDate data;
@@ -82,6 +87,10 @@ public class OrdemServico {
 
     public void setVeiculo(Veiculo v) {
         veiculo = v;
+    }
+
+    public java.util.List<ItemOrdem> getItens() {
+        return itens;
     }
 
     public TipoServico getTipoServico() {

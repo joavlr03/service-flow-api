@@ -5,6 +5,8 @@ import br.com.serviceflow.api.dto.empresa.EmpresaResponse;
 import br.com.serviceflow.api.service.EmpresaService;
 import br.com.serviceflow.api.dto.domain.DomainDtos.EmpresaIn;
 import br.com.serviceflow.api.dto.domain.DomainDtos.TemaIn;
+import br.com.serviceflow.api.dto.domain.DomainDtos.OnboardingIn;
+import org.springframework.web.bind.annotation.PostMapping;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -38,6 +40,12 @@ public class EmpresaController {
     @Operation(summary = "Atualizar a empresa do usuário autenticado")
     public EmpresaResponse update(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody EmpresaIn request) {
         return mapper.toDto(service.update(jwt.getClaim("companyId"), request));
+    }
+
+    @PostMapping("/onboarding")
+    @Operation(summary = "Concluir o primeiro acesso: modo, segmento, veículo, duração, tema e serviços/produtos (somente ADMIN)")
+    public EmpresaResponse onboarding(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody OnboardingIn request) {
+        return mapper.toDto(service.onboarding(jwt.getClaim("companyId"), request));
     }
 
     @PutMapping("/tema")

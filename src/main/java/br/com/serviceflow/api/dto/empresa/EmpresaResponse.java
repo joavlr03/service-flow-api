@@ -11,4 +11,8 @@ public record EmpresaResponse(
         String plan,
         Boolean active,
         LocalDateTime createdAt,
-        String themeColor) {}
+        String themeColor,
+        String usageMode,
+        Boolean usesVehicle,
+        Boolean usesDuration,
+        Boolean onboardingDone) {}
