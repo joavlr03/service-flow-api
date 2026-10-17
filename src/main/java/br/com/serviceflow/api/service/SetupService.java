@@ -12,6 +12,7 @@ import br.com.serviceflow.api.model.Categoria;
 import br.com.serviceflow.api.repository.CategoriaRepository;
 import java.time.LocalDateTime;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -24,15 +25,18 @@ public class SetupService {
     private final PasswordEncoder passwordEncoder;
     private final CategoriaRepository categoriaRepository;
     private final String inviteKey;
+    private final ApplicationEventPublisher events;
 
     public SetupService(EmpresaRepository empresaRepository, UsuarioRepository usuarioRepository,
                         PasswordEncoder passwordEncoder, CategoriaRepository categoriaRepository,
-                        @Value("${app.security.setup-invite-key}") String inviteKey) {
+                        @Value("${app.security.setup-invite-key}") String inviteKey,
+                        ApplicationEventPublisher events) {
         this.empresaRepository = empresaRepository;
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
         this.categoriaRepository = categoriaRepository;
         this.inviteKey = inviteKey;
+        this.events = events;
     }
 
     @Transactional(readOnly = true)
@@ -73,6 +77,9 @@ public class SetupService {
             categoriaRepository.save(new Categoria(empresa, "DESPESA", nome));
         for (String nome : CategoriaService.PADRAO_ENTRADA)
             categoriaRepository.save(new Categoria(empresa, "ENTRADA", nome));
+
+        // Boas-vindas por e-mail: só sai depois do commit (WelcomeMailService).
+        events.publishEvent(new EmpresaCadastradaEvent(empresa.getNome(), usuario.getNome(), usuario.getEmail()));
 
         return new SetupResponse(empresa.getId(), usuario.getId(), usuario.getNome(),
                 usuario.getEmail(), usuario.getPerfil(), "ACTIVE");

@@ -4,8 +4,11 @@ import java.util.Properties;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.*;
 import org.springframework.mail.javamail.*;
+import org.springframework.scheduling.annotation.EnableAsync;
 
+// @EnableAsync: e-mails (boas-vindas) saem em segundo plano, sem segurar a requisição.
 @Configuration
+@EnableAsync
 public class MailConfig {
     @Bean
     JavaMailSender javaMailSender(@Value("${spring.mail.host:smtp.gmail.com}") String host,
