@@ -15,4 +15,5 @@ public record EmpresaResponse(
         String usageMode,
         Boolean usesVehicle,
         Boolean usesDuration,
-        Boolean onboardingDone) {}
+        Boolean onboardingDone,
+        String appIcon) {}

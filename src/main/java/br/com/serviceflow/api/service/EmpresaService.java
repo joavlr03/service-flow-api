@@ -41,6 +41,7 @@ public class EmpresaService {
         empresa.setUsaVeiculo(!vendas && x.usesVehicle()); // venda não tem veículo (spec 006)
         empresa.setUsaDuracao(x.usesDuration());
         if (x.themeColor() != null) empresa.setCorPrimaria(x.themeColor().toUpperCase());
+        empresa.setIcone(x.appIcon());
         if (vendas) {
             x.products().forEach(p -> {
                 Produto n = new Produto();

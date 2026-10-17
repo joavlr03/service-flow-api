@@ -10,6 +10,7 @@ public class EmpresaMapper {
                 empresa.getId(), empresa.getNome(), empresa.getSegmento(),
                 empresa.getNomeProprietario(), empresa.getEmail(), empresa.getPlano(),
                 empresa.getAtivo(), empresa.getCriadoEm(), empresa.getCorPrimaria(), empresa.getModoUso(),
-                empresa.getUsaVeiculo(), empresa.getUsaDuracao(), empresa.getOnboardingConcluido());
+                empresa.getUsaVeiculo(), empresa.getUsaDuracao(), empresa.getOnboardingConcluido(),
+                empresa.getIcone());
     }
 }

@@ -16,8 +16,10 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 @Component
 public class AuthRateLimitFilter extends OncePerRequestFilter {
+    // Sem /auth/refresh: ele exige um token aleatório (não há senha para adivinhar) e roda a cada
+    // página aberta, então limitá-lo derrubava a sessão de quem só navega.
     private static final Set<String> PROTECTED_PATHS = Set.of(
-            "/api/v2/auth/login", "/api/v2/auth/refresh", "/api/v2/auth/esqueci-minha-senha",
+            "/api/v2/auth/login", "/api/v2/auth/esqueci-minha-senha",
             "/api/v2/auth/redefinir-senha", "/api/v2/setup");
     private final ConcurrentHashMap<String, Window> windows = new ConcurrentHashMap<>();
     private final int maxAttempts;
@@ -54,8 +56,13 @@ public class AuthRateLimitFilter extends OncePerRequestFilter {
         chain.doFilter(request, response);
     }
 
-    private String clientIp(HttpServletRequest request) {
-        return request.getRemoteAddr();
+    // No Cloud Run getRemoteAddr() é o proxy do Google, igual para todos os usuários. O IP real é o
+    // último valor do X-Forwarded-For, que o Google acrescenta; os anteriores o cliente pode forjar.
+    static String clientIp(HttpServletRequest request) {
+        String forwarded = request.getHeader("X-Forwarded-For");
+        if (forwarded == null || forwarded.isBlank()) return request.getRemoteAddr();
+        String[] hops = forwarded.split(",");
+        return hops[hops.length - 1].trim();
     }
 
     private record Window(Instant started, int count) {}

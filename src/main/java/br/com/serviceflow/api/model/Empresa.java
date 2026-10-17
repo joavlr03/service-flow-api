@@ -53,6 +53,10 @@ public class Empresa {
     @Column(name = "onboarding_concluido", nullable = false)
     private Boolean onboardingConcluido = false;
 
+    // Ícone do app (gota, carro, ferramenta...); nulo = gota padrão.
+    @Column(length = 20)
+    private String icone;
+
     public Empresa() {}
 
     public Long getId() { return id; }
@@ -71,6 +75,8 @@ public class Empresa {
     public void setAtivo(Boolean ativo) { this.ativo = ativo; }
     public LocalDateTime getCriadoEm() { return criadoEm; }
     public void setCriadoEm(LocalDateTime criadoEm) { this.criadoEm = criadoEm; }
+    public String getIcone() { return icone; }
+    public void setIcone(String icone) { this.icone = icone; }
     public Boolean getUsaDuracao() { return usaDuracao; }
     public void setUsaDuracao(Boolean usaDuracao) { this.usaDuracao = usaDuracao; }
     public Boolean getOnboardingConcluido() { return onboardingConcluido; }

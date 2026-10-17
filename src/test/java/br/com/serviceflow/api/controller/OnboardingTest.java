@@ -43,13 +43,19 @@ class OnboardingTest {
 
         onboarding(a, """
                 {"name":"Barbearia do Zé","segment":"Salão / barbearia","usageMode":"SERVICOS",
-                 "usesVehicle":false,"usesDuration":false,"themeColor":"#2563eb",
+                 "usesVehicle":false,"usesDuration":false,"themeColor":"#2563eb","appIcon":"tesoura",
                  "services":[{"name":"Corte","price":50},{"name":"Barba","price":35}]}""")
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.onboardingDone", is(true))).andExpect(jsonPath("$.name", is("Barbearia do Zé")))
-                .andExpect(jsonPath("$.usesDuration", is(false))).andExpect(jsonPath("$.themeColor", is("#2563EB")));
+                .andExpect(jsonPath("$.usesDuration", is(false))).andExpect(jsonPath("$.themeColor", is("#2563EB")))
+                .andExpect(jsonPath("$.appIcon", is("tesoura")));
         mvc.perform(get("/api/v2/servicos").header("Authorization", a))
                 .andExpect(jsonPath("$", hasSize(2))).andExpect(jsonPath("$[0].durationMin", is(60)));
+
+        // Ícone fora da lista é recusado (só vale antes de concluir, então testa em outra empresa).
+        onboarding(novaEmpresa("Outra", "outra-icone"), """
+                {"name":"X","segment":"Outro","usageMode":"SERVICOS","usesVehicle":true,"usesDuration":true,
+                 "appIcon":"foguete","services":[{"name":"Y","price":1}]}""").andExpect(status().isUnprocessableEntity());
 
         // Não roda de novo.
         onboarding(a, """
